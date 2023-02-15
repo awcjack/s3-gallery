@@ -1,0 +1,37 @@
+.top-nav-bar {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 999;
+  overflow: scroll;
+  border-bottom: 1px;
+  border-color: grey;
+  border-bottom-style: solid;
+  background-color: white;
+  align-items: center;
+}
+
+.top-nav-bar .icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-left: 80px;
+}
+
+.top-nav-bar .icon a {
+  line-height: normal;
+}
+
+.top-nav-bar .icon .title {
+  text-align: center;
+}
+
+.top-nav-bar .login {
+  align-self:center;
+  text-align: right;
+  display: flex;
+  margin-right: 80px;
+}
