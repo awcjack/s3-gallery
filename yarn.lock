@@ -785,15 +785,15 @@
     "@aws-sdk/types" "3.357.0"
     tslib "^2.5.0"
 
-"@aws-sdk/s3-request-presigner@^3.357.0":
-  version "3.357.0"
-  resolved "https://registry.yarnpkg.com/@aws-sdk/s3-request-presigner/-/s3-request-presigner-3.357.0.tgz#aa768e9424cceb6edbf42a0133e022ac932fefcf"
-  integrity sha512-5hDb3nglYSIden1CMNZAz2mNlCVUgBsLpyEomTsURBhwvtoUqAUs75YR7QCT4Anvs0AQYlvteoTYeP6myb+e6Q==
+"@aws-sdk/s3-request-presigner@^3.359.0":
+  version "3.359.0"
+  resolved "https://registry.yarnpkg.com/@aws-sdk/s3-request-presigner/-/s3-request-presigner-3.359.0.tgz#70b8b80eaabd74a30e93e38c54278cb2293a190c"
+  integrity sha512-zKnB3INrnFFLCmwkp/6rpdFdJmJXkLhB6gDEgJDj9kZMciKsONFd9PwubW3gnpQeQxrdMlB0JQmOO3oyZH9aAA==
   dependencies:
     "@aws-sdk/middleware-endpoint" "3.357.0"
     "@aws-sdk/protocol-http" "3.357.0"
     "@aws-sdk/signature-v4-multi-region" "3.357.0"
-    "@aws-sdk/smithy-client" "3.357.0"
+    "@aws-sdk/smithy-client" "3.358.0"
     "@aws-sdk/types" "3.357.0"
     "@aws-sdk/util-format-url" "3.357.0"
     tslib "^2.5.0"
@@ -868,14 +868,14 @@
     "@aws-sdk/types" "3.347.0"
     tslib "^2.5.0"
 
-"@aws-sdk/smithy-client@3.357.0":
-  version "3.357.0"
-  resolved "https://registry.yarnpkg.com/@aws-sdk/smithy-client/-/smithy-client-3.357.0.tgz#5ddd40a485872040b04568d5279ab5698b108012"
-  integrity sha512-mYE++WPPjfkEZ/YkhCi/Lj4/Up/VYH+bud22Wg5KZ6zsG/vqLJ8oAoe1cGcH7S2SGQ27dOZazVJzQQJ1Fg+7oA==
+"@aws-sdk/smithy-client@3.358.0":
+  version "3.358.0"
+  resolved "https://registry.yarnpkg.com/@aws-sdk/smithy-client/-/smithy-client-3.358.0.tgz#58353892fb832c10890bf0ebe49830af82f8eebc"
+  integrity sha512-oqctxWb9yAqCh4ENwUkt9MC01l5uKoy+QCiSUUhQ76k7R3lyGOge9ycyRyoKl+oZWvEpnjZevXQFqEfGzkL7bA==
   dependencies:
     "@aws-sdk/middleware-stack" "3.357.0"
     "@aws-sdk/types" "3.357.0"
-    "@aws-sdk/util-stream" "3.357.0"
+    "@aws-sdk/util-stream" "3.358.0"
     "@smithy/types" "^1.0.0"
     tslib "^2.5.0"
 
@@ -1063,10 +1063,10 @@
     "@aws-sdk/util-buffer-from" "3.310.0"
     tslib "^2.5.0"
 
-"@aws-sdk/util-stream@3.357.0":
-  version "3.357.0"
-  resolved "https://registry.yarnpkg.com/@aws-sdk/util-stream/-/util-stream-3.357.0.tgz#9ea2f44cd6836ee957ac4ec6edc38968667f2073"
-  integrity sha512-HRMPE8i0OFrNLdwuE3mxAoHWgmJ32w3FNzVsiIXHsVeptomQeDuD9uugxq76ptZJRqbOpljR7AtfGVxc4kMNeg==
+"@aws-sdk/util-stream@3.358.0":
+  version "3.358.0"
+  resolved "https://registry.yarnpkg.com/@aws-sdk/util-stream/-/util-stream-3.358.0.tgz#5daf9072f4a4535664de6d0bdbe26470eb856595"
+  integrity sha512-zUhpjxAXV2+0eALlTU6uXRYMs10XYpcYzl3NtLRe4wWgnrOOOZnF/t5LQDoKXOfaMdzwZ+i90+PYr+6JQ58+7g==
   dependencies:
     "@aws-sdk/fetch-http-handler" "3.357.0"
     "@aws-sdk/node-http-handler" "3.357.0"
