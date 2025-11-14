@@ -15,18 +15,21 @@ function App() {
   const urlSecretKey = urlParams.get('secretKey') || ""
   const urlEndpoint = urlParams.get('endpoint') || ""
   const urlRegion = urlParams.get('region') || ""
+  const urlBucket = urlParams.get('bucket') || ""
 
   const s3AccessKey = urlAccessKey || localStorage.getItem("s3-access-key") || ""
   const s3SecretKey = urlSecretKey || localStorage.getItem("s3-secret-key") || ""
   const s3Endpoint = urlEndpoint || localStorage.getItem("s3-endpoint") || "https://gateway.storjshare.io"
   const s3Region = urlRegion || localStorage.getItem("s3-region") || "US1"
+  const s3Bucket = urlBucket || localStorage.getItem("s3-bucket") || ""
 
   const [showLoginForm, setShowLoginForm] = useState(!s3AccessKey || !s3SecretKey)
   const [s3Token, setS3Token] = useState({
     accessKey: s3AccessKey,
     secretKey: s3SecretKey,
     endpoint: s3Endpoint,
-    region: s3Region
+    region: s3Region,
+    bucket: s3Bucket
   })
   const [s3Client, setS3Client] = useState(new S3Client({
     region: s3Token.region,
@@ -45,6 +48,7 @@ function App() {
     localStorage.setItem("s3-secret-key", s3Token.secretKey)
     localStorage.setItem("s3-endpoint", s3Token.endpoint)
     localStorage.setItem("s3-region", s3Token.region)
+    localStorage.setItem("s3-bucket", s3Token.bucket)
     setS3Client(new S3Client({
       region: s3Token.region,
       endpoint: s3Token.endpoint,
@@ -77,7 +81,7 @@ function App() {
     <div className="App">
       <Header logined={true} openLoginForm={() => setShowLoginForm(true)}/>
       {showLoginForm ? <LoginModal closeLoginForm={()=>setShowLoginForm(false)} submitForm={submitLoginForm} setS3Token={setS3Token} s3Token={s3Token}/> : null}
-      <MainContainer s3Client={s3Client} bucketList={bucketList}/>
+      <MainContainer s3Client={s3Client} bucketList={bucketList} initialBucket={s3Token.bucket}/>
     </div>
   )
 }

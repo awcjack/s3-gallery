@@ -1,8 +1,8 @@
-import { S3Item } from "../s3API"
+import { S3Item, getObjectContent, getPresignedDownloadUrl } from "../s3API"
 import { S3Client } from "@aws-sdk/client-s3"
-import { getPresignedDownloadUrl } from "../s3API"
 import "./main.css"
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { Buffer } from "buffer"
 
 function normaliseSize(size: number): string {
   const unit = ["B", "kB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB", "RB", "QB"]
@@ -20,6 +20,136 @@ function isMediaFile(filename: string): boolean {
   const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg']
   const videoExts = ['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv']
   return imageExts.includes(ext) || videoExts.includes(ext)
+}
+
+function isVideoFile(filename: string): boolean {
+  const ext = filename.toLowerCase().split('.').pop() || ""
+  const videoExts = ['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv']
+  return videoExts.includes(ext)
+}
+
+function getMediaType(filename: string): string {
+  const ext = filename.toLowerCase().split('.').pop() || ""
+  const extMap: { [key: string]: string } = {
+    'jpg': 'image/jpeg',
+    'jpeg': 'image/jpeg',
+    'png': 'image/png',
+    'gif': 'image/gif',
+    'bmp': 'image/bmp',
+    'webp': 'image/webp',
+    'svg': 'image/svg+xml',
+    'mp4': 'video/mp4',
+    'webm': 'video/webm',
+    'ogg': 'video/ogg',
+    'mov': 'video/quicktime',
+    'avi': 'video/x-msvideo',
+    'mkv': 'video/x-matroska'
+  }
+  return extMap[ext] || 'application/octet-stream'
+}
+
+function MediaThumbnail(props: {
+  s3Client: S3Client,
+  bucket: string,
+  item: S3Item
+}) {
+  const [thumbnail, setThumbnail] = useState<string>("")
+  const [loading, setLoading] = useState(true)
+  const isVideo = isVideoFile(props.item.name)
+
+  useEffect(() => {
+    let isMounted = true
+    const loadThumbnail = async () => {
+      if (props.item.path && props.bucket) {
+        try {
+          setLoading(true)
+          const data = await getObjectContent(props.s3Client, props.bucket, props.item.path)
+          if (data && isMounted) {
+            const mediaType = getMediaType(props.item.name)
+            const mediaSrc = `data:${mediaType};base64,` + Buffer.from(data).toString("base64")
+            setThumbnail(mediaSrc)
+          }
+        } catch (error) {
+          console.error("Error loading thumbnail:", error)
+        } finally {
+          if (isMounted) {
+            setLoading(false)
+          }
+        }
+      }
+    }
+    loadThumbnail()
+    return () => {
+      isMounted = false
+    }
+  }, [props.s3Client, props.bucket, props.item.path])
+
+  if (loading) {
+    return (
+      <div style={{
+        width: '100%',
+        height: '150px',
+        backgroundColor: '#f0f0f0',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: '4px'
+      }}>
+        <span>Loading...</span>
+      </div>
+    )
+  }
+
+  if (!thumbnail) {
+    return (
+      <div style={{
+        width: '100%',
+        height: '150px',
+        backgroundColor: '#f0f0f0',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: '4px',
+        fontSize: '3em'
+      }}>
+        {isVideo ? "🎬" : "🖼️"}
+      </div>
+    )
+  }
+
+  return (
+    <div style={{
+      width: '100%',
+      height: '150px',
+      overflow: 'hidden',
+      borderRadius: '4px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: '#000'
+    }}>
+      {isVideo ? (
+        <video
+          src={thumbnail}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover'
+          }}
+        />
+      ) : (
+        <img
+          src={thumbnail}
+          alt={props.item.name}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover'
+          }}
+        />
+      )}
+    </div>
+  )
 }
 
 export default function itemList(props: {
@@ -155,16 +285,21 @@ export default function itemList(props: {
               }}
             >
               <div>
-                <div style={{fontSize: '2.5em', textAlign: 'center', marginBottom: '8px'}}>
-                  {item.isBucket ? "🪣" : item.isDirectory ? "🗂️" : isMediaFile(item.name) ? "🖼️" : "📄"}
-                </div>
+                {!item.isBucket && !item.isDirectory && isMediaFile(item.name) ? (
+                  <MediaThumbnail s3Client={props.s3Client} bucket={props.bucket} item={item} />
+                ) : (
+                  <div style={{fontSize: '2.5em', textAlign: 'center', marginBottom: '8px'}}>
+                    {item.isBucket ? "🪣" : item.isDirectory ? "🗂️" : "📄"}
+                  </div>
+                )}
                 <div style={{
                   fontWeight: '500',
                   fontSize: '0.9em',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
-                  marginBottom: '4px'
+                  marginBottom: '4px',
+                  marginTop: '8px'
                 }} title={item.name}>
                   {item.name}
                 </div>

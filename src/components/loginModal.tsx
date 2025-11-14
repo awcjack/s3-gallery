@@ -3,6 +3,7 @@ function updateAccessKey(event: React.FormEvent<HTMLInputElement>, setS3Token: R
   secretKey: string;
   endpoint: string;
   region: string;
+  bucket: string;
 }>>) {
   event.persist()
   setS3Token((values) => ({
@@ -16,6 +17,7 @@ function updateSecretKey(event: React.FormEvent<HTMLInputElement>, setS3Token: R
   secretKey: string;
   endpoint: string;
   region: string;
+  bucket: string;
 }>>) {
   event.persist()
   setS3Token((values) => ({
@@ -29,6 +31,7 @@ function updateEndpoint(event: React.FormEvent<HTMLInputElement>, setS3Token: Re
   secretKey: string;
   endpoint: string;
   region: string;
+  bucket: string;
 }>>) {
   event.persist()
   setS3Token((values) => ({
@@ -42,11 +45,26 @@ function updateRegion(event: React.FormEvent<HTMLInputElement>, setS3Token: Reac
   secretKey: string;
   endpoint: string;
   region: string;
+  bucket: string;
 }>>) {
   event.persist()
   setS3Token((values) => ({
     ...values,
     region: (event.target as HTMLInputElement).value
+  }))
+}
+
+function updateBucket(event: React.FormEvent<HTMLInputElement>, setS3Token: React.Dispatch<React.SetStateAction<{
+  accessKey: string;
+  secretKey: string;
+  endpoint: string;
+  region: string;
+  bucket: string;
+}>>) {
+  event.persist()
+  setS3Token((values) => ({
+    ...values,
+    bucket: (event.target as HTMLInputElement).value
   }))
 }
 
@@ -58,11 +76,13 @@ export default function loginForm(props: {
     secretKey: string;
     endpoint: string;
     region: string;
+    bucket: string;
   }>>, s3Token: {
     accessKey: string;
     secretKey: string;
     endpoint: string;
     region: string;
+    bucket: string;
   }
 }) {
   return (
@@ -108,6 +128,15 @@ export default function loginForm(props: {
             name="s3Region"
             value={props.s3Token.region}
             onInput={(event) => updateRegion(event, props.setS3Token)}
+          /><br />
+          <input
+            id="bucket"
+            className="login-modal-input"
+            type="text"
+            placeholder="Bucket (optional)"
+            name="s3Bucket"
+            value={props.s3Token.bucket}
+            onInput={(event) => updateBucket(event, props.setS3Token)}
           /><br />
           <button type="submit">Login</button>
         </form>

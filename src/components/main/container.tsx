@@ -19,9 +19,10 @@ function isMediaFile(filename: string): boolean {
 
 export default function mainContainer(props: {
   s3Client: S3Client,
-  bucketList: S3Item[]
+  bucketList: S3Item[],
+  initialBucket?: string
 }) {
-  const [bucket, setBucket] = useState("")
+  const [bucket, setBucket] = useState(props.initialBucket || "")
   const [path, setPath] = useState("")
   const [currentFile, setCurrentFile] = useState<S3Item|null>(null)
   const [currentDir, setCurrentDir] = useState<S3Item[]>([])
