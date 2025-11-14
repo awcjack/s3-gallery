@@ -18,7 +18,7 @@
   grid-area: 1 / 2 / span 1 / span 1;
   display: grid;
   grid-auto-rows: 30px;
-  grid-template-columns: 65% 25% 10%;
+  grid-template-columns: 45% 20% 15% 20%;
   overflow-y: scroll;
 }
 

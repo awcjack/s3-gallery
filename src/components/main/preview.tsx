@@ -7,6 +7,32 @@ import download from "../../assets/undraw_cloud-download.svg"
 import person from "../../assets/undraw_person.svg"
 import { useEffect, useState } from "react"
 
+function isVideoFile(filename: string): boolean {
+  const ext = filename.toLowerCase().split('.').pop() || ""
+  const videoExts = ['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv']
+  return videoExts.includes(ext)
+}
+
+function getMediaType(filename: string): string {
+  const ext = filename.toLowerCase().split('.').pop() || ""
+  const extMap: { [key: string]: string } = {
+    'jpg': 'image/jpeg',
+    'jpeg': 'image/jpeg',
+    'png': 'image/png',
+    'gif': 'image/gif',
+    'bmp': 'image/bmp',
+    'webp': 'image/webp',
+    'svg': 'image/svg+xml',
+    'mp4': 'video/mp4',
+    'webm': 'video/webm',
+    'ogg': 'video/ogg',
+    'mov': 'video/quicktime',
+    'avi': 'video/x-msvideo',
+    'mkv': 'video/x-matroska'
+  }
+  return extMap[ext] || 'application/octet-stream'
+}
+
 export default function preview(props: {
   s3Client: S3Client,
   bucket: string,
@@ -17,15 +43,17 @@ export default function preview(props: {
   const [showShareModal, setShowShareModal] = useState(false)
   const [downloadExpiry, setDownloadExpiry] = useState(0)
   const [downloadLink, setDownloadLink] = useState("")
+  const isVideo = isVideoFile(props.object.name)
 
   useEffect(() => {
     (async () => {
       if (props.bucket && props.object.path) {
         const currentData = await getObjectContent(props.s3Client, props.bucket, props.object.path)
         if (currentData) {
-          const imgSrc = "data:image/png;base64," + Buffer.from(currentData).toString("base64")
-          if (data !== imgSrc) {
-            setData(imgSrc)
+          const mediaType = getMediaType(props.object.name)
+          const mediaSrc = `data:${mediaType};base64,` + Buffer.from(currentData).toString("base64")
+          if (data !== mediaSrc) {
+            setData(mediaSrc)
           }
         }
       }
@@ -38,7 +66,7 @@ export default function preview(props: {
       setDownloadExpiry(expiry)
     }
   }
-    
+
   return (
     <div className="preview" onClick={(e) => props.closePreview(e)}>
       <div className="preview-header" onClick={(e) => e.stopPropagation()}>
@@ -53,13 +81,19 @@ export default function preview(props: {
             document.body.appendChild(a)
             a.setAttribute("style", "display: none")
             a.href = presignedUrl
+            a.download = props.object.name
             a.click();
+            document.body.removeChild(a)
           }}/>
           <img className="" src={person} onClick={(e) => setShowShareModal(true)}/>
         </div>
       </div>
       <div className="preview-content" onClick={(e) => e.stopPropagation()}>
-        <img src={data} className="preview-content"></img>
+        {isVideo ? (
+          <video src={data} controls style={{maxWidth: '90vw', maxHeight: '80vh'}} />
+        ) : (
+          <img src={data} style={{maxWidth: '90vw', maxHeight: '80vh'}} />
+        )}
       </div>
       {showShareModal ?
         <div className="modal-bg" onClick={(e) => {
