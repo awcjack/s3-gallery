@@ -1,12 +1,33 @@
 :root {
-  font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
+  /* Material Design Typography */
+  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
   font-size: 16px;
-  line-height: 24px;
+  line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark;
-  color: rgba(24, 24, 24, 0.87);
-  background-color: #ffffff;
+  /* Material Design Colors */
+  --md-primary: #1976d2;
+  --md-primary-dark: #1565c0;
+  --md-primary-light: #42a5f5;
+  --md-secondary: #4caf50;
+  --md-secondary-dark: #388e3c;
+  --md-background: #fafafa;
+  --md-surface: #ffffff;
+  --md-error: #f44336;
+  --md-text-primary: rgba(0, 0, 0, 0.87);
+  --md-text-secondary: rgba(0, 0, 0, 0.60);
+  --md-text-hint: rgba(0, 0, 0, 0.38);
+  --md-divider: rgba(0, 0, 0, 0.12);
+
+  /* Shadows */
+  --md-shadow-1: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+  --md-shadow-2: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+  --md-shadow-3: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+  --md-shadow-4: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+  --md-shadow-5: 0 19px 38px rgba(0,0,0,0.30), 0 15px 12px rgba(0,0,0,0.22);
+
+  color: var(--md-text-primary);
+  background-color: var(--md-background);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -15,78 +36,193 @@
   -webkit-text-size-adjust: 100%;
 }
 
+* {
+  box-sizing: border-box;
+}
+
 a {
   font-weight: 500;
-  color: #242424;
-  text-decoration: inherit;
+  color: var(--md-primary);
+  text-decoration: none;
+  transition: color 0.2s ease;
 }
 a:hover {
-  color: #535bf2;
+  color: var(--md-primary-dark);
 }
 
 body {
   margin: 0;
-  display: block;
-  place-items: center;
   min-width: 320px;
-  /* min-height: 100vh; */
+  min-height: 100vh;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+  font-weight: 500;
 }
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
+h1 { font-size: 2.5rem; line-height: 1.2; }
+h2 { font-size: 2rem; line-height: 1.3; }
+h3 { font-size: 1.75rem; line-height: 1.4; }
+h4 { font-size: 1.5rem; line-height: 1.4; }
+h5 { font-size: 1.25rem; line-height: 1.5; }
+h6 { font-size: 1rem; line-height: 1.5; }
+
+/* Material Design Buttons */
+button, .md-button {
+  border-radius: 4px;
+  border: none;
+  padding: 8px 16px;
+  font-size: 0.875rem;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background-color: var(--md-primary);
+  color: white;
   cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  transition: all 0.2s ease;
+  box-shadow: var(--md-shadow-1);
+  outline: none;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+button:hover:not(:disabled), .md-button:hover:not(:disabled) {
+  background-color: var(--md-primary-dark);
+  box-shadow: var(--md-shadow-2);
 }
 
+button:active:not(:disabled), .md-button:active:not(:disabled) {
+  box-shadow: var(--md-shadow-1);
+  transform: scale(0.98);
+}
+
+button:disabled, .md-button-disabled {
+  background-color: rgba(0, 0, 0, 0.12) !important;
+  color: rgba(0, 0, 0, 0.38) !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
+}
+
+/* Button Variants */
+.md-button-primary {
+  background-color: var(--md-primary);
+  color: white;
+}
+
+.md-button-primary:hover:not(:disabled) {
+  background-color: var(--md-primary-dark);
+}
+
+.md-button-secondary {
+  background-color: var(--md-background);
+  color: var(--md-text-primary);
+}
+
+.md-button-secondary:hover:not(:disabled) {
+  background-color: #e8eaed;
+}
+
+.md-button-success {
+  background-color: var(--md-secondary);
+  color: white;
+}
+
+.md-button-success:hover:not(:disabled) {
+  background-color: var(--md-secondary-dark);
+}
+
+.md-button-small {
+  padding: 4px 12px;
+  font-size: 0.8125rem;
+}
+
+/* Material Design Modal */
 .modal-bg {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   position: fixed;
-  z-index: 9999;
+  z-index: 1000;
   left: 0;
   top: 0;
   width: 100%;
   height: 100%;
   overflow: auto;
-  background-color: rgb(0, 0, 0);
-  background-color: rgba(0, 0, 0, 0.7);
+  background-color: rgba(0, 0, 0, 0.5);
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .modal {
-  background-color: #fefefe;
-  margin: 15% auto;
-  padding: 20px;
-  border: 1px solid #888;
-  width: 50%;
-  z-index: 99999;
+  background-color: var(--md-surface);
+  margin: 20px;
+  padding: 24px;
+  border-radius: 4px;
+  box-shadow: var(--md-shadow-5);
+  max-width: 500px;
+  width: 90%;
+  z-index: 1001;
+  animation: slideIn 0.2s ease;
+}
+
+@keyframes slideIn {
+  from { transform: translateY(-50px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Material Design Input */
+input[type="text"],
+input[type="number"],
+input[type="password"] {
+  width: 100%;
+  padding: 12px 16px;
+  margin: 8px 0;
+  border: 1px solid var(--md-divider);
+  border-radius: 4px;
+  font-size: 1rem;
+  font-family: inherit;
+  transition: all 0.2s ease;
+  background-color: var(--md-surface);
+}
+
+input:focus {
+  outline: none;
+  border-color: var(--md-primary);
+  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.1);
+}
+
+input::placeholder {
+  color: var(--md-text-hint);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  :root {
+    font-size: 14px;
+  }
+
+  .modal {
+    width: 95%;
+    padding: 16px;
+    margin: 10px;
+  }
+
+  h1 { font-size: 2rem; }
+  h2 { font-size: 1.75rem; }
+  h3 { font-size: 1.5rem; }
+}
+
+@media (max-width: 480px) {
+  :root {
+    font-size: 13px;
+  }
+
+  button {
+    padding: 6px 12px;
+    font-size: 0.8125rem;
+  }
 }

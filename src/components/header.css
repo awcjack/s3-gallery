@@ -1,37 +1,96 @@
+/* Material Design App Bar */
 .top-nav-bar {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
+  align-items: center;
   position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
   width: 100%;
-  z-index: 999;
-  overflow: scroll;
-  border-bottom: 1px;
-  border-color: grey;
-  border-bottom-style: solid;
-  background-color: white;
-  align-items: center;
+  z-index: 100;
+  background-color: var(--md-surface, #ffffff);
+  box-shadow: var(--md-shadow-2, 0 2px 4px rgba(0,0,0,0.1));
+  padding: 0 24px;
 }
 
 .top-nav-bar .icon {
   display: flex;
-  justify-content: center;
   align-items: center;
-  margin-left: 80px;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.top-nav-bar .icon img {
+  height: 40px;
+  width: auto;
 }
 
 .top-nav-bar .icon a {
-  line-height: normal;
-}
-
-.top-nav-bar .icon .title {
-  text-align: center;
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: var(--md-text-primary, rgba(0, 0, 0, 0.87));
+  white-space: nowrap;
 }
 
 .top-nav-bar .login {
-  align-self:center;
-  text-align: right;
   display: flex;
-  margin-right: 80px;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.top-nav-bar .login div {
+  cursor: pointer;
+  color: var(--md-primary, #1976d2);
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .top-nav-bar {
+    height: 56px;
+    padding: 0 16px;
+  }
+
+  .top-nav-bar .icon {
+    gap: 12px;
+  }
+
+  .top-nav-bar .icon img {
+    height: 32px;
+  }
+
+  .top-nav-bar .icon a {
+    font-size: 1.125rem;
+  }
+
+  .top-nav-bar .login {
+    gap: 8px;
+  }
+
+  .top-nav-bar .login div {
+    font-size: 0.8125rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .top-nav-bar {
+    padding: 0 12px;
+  }
+
+  .top-nav-bar .icon a {
+    font-size: 1rem;
+  }
+
+  .top-nav-bar .icon img {
+    height: 28px;
+  }
+
+  .top-nav-bar .login div {
+    display: none; /* Hide text on very small screens */
+  }
 }
