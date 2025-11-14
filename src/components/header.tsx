@@ -4,14 +4,31 @@ import { useState } from "react"
 export default function header(props: {
   logined: boolean,
   openLoginForm: React.EventHandler<React.MouseEvent<HTMLElement>>,
+  s3Token: {
+    accessKey: string;
+    secretKey: string;
+    endpoint: string;
+    region: string;
+    bucket: string;
+  },
   onShareUrl?: () => void
 }) {
   const [showShareModal, setShowShareModal] = useState(false)
   const [shareUrl, setShareUrl] = useState("")
 
   const handleShareUrl = () => {
-    const url = window.location.href
-    setShareUrl(url)
+    // Build share URL with all configuration
+    const baseUrl = window.location.origin + window.location.pathname
+    const params = new URLSearchParams()
+
+    if (props.s3Token.accessKey) params.set('accessKey', props.s3Token.accessKey)
+    if (props.s3Token.secretKey) params.set('secretKey', props.s3Token.secretKey)
+    if (props.s3Token.endpoint) params.set('endpoint', props.s3Token.endpoint)
+    if (props.s3Token.region) params.set('region', props.s3Token.region)
+    if (props.s3Token.bucket) params.set('bucket', props.s3Token.bucket)
+
+    const fullUrl = params.toString() ? `${baseUrl}?${params.toString()}` : baseUrl
+    setShareUrl(fullUrl)
     setShowShareModal(true)
   }
 

@@ -86,15 +86,7 @@ function MediaThumbnail(props: {
 
   if (loading) {
     return (
-      <div style={{
-        width: '100%',
-        height: '150px',
-        backgroundColor: '#f0f0f0',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderRadius: '4px'
-      }}>
+      <div className="media-thumbnail-loading">
         <span>Loading...</span>
       </div>
     )
@@ -102,50 +94,24 @@ function MediaThumbnail(props: {
 
   if (!thumbnail) {
     return (
-      <div style={{
-        width: '100%',
-        height: '150px',
-        backgroundColor: '#f0f0f0',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderRadius: '4px',
-        fontSize: '3em'
-      }}>
+      <div className="media-thumbnail-placeholder">
         {isVideo ? "🎬" : "🖼️"}
       </div>
     )
   }
 
   return (
-    <div style={{
-      width: '100%',
-      height: '150px',
-      overflow: 'hidden',
-      borderRadius: '4px',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: '#000'
-    }}>
+    <div className="media-thumbnail-container">
       {isVideo ? (
         <video
           src={thumbnail}
-          style={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover'
-          }}
+          className="media-thumbnail"
         />
       ) : (
         <img
           src={thumbnail}
           alt={props.item.name}
-          style={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover'
-          }}
+          className="media-thumbnail"
         />
       )}
     </div>
@@ -277,32 +243,18 @@ export default function itemList(props: {
   const fileCount = props.itemList.filter(item => !item.isBucket && !item.isDirectory).length
 
   return (
-    <div style={{height: '100%', display: 'flex', flexDirection: 'column'}}>
-      <div style={{padding: '10px', borderBottom: '2px solid #e0e0e0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px'}}>
-        <div style={{display: 'flex', gap: '8px', flexWrap: 'wrap'}}>
+    <div className="list-container">
+      <div className="toolbar">
+        <div className="toolbar-left">
           <button
             onClick={() => setViewMode('grid')}
-            style={{
-              padding: '8px 16px',
-              backgroundColor: viewMode === 'grid' ? '#1a73e8' : '#f1f3f4',
-              color: viewMode === 'grid' ? 'white' : 'black',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
+            className={`md-button ${viewMode === 'grid' ? 'md-button-primary' : 'md-button-secondary'}`}
           >
             Grid View
           </button>
           <button
             onClick={() => setViewMode('list')}
-            style={{
-              padding: '8px 16px',
-              backgroundColor: viewMode === 'list' ? '#1a73e8' : '#f1f3f4',
-              color: viewMode === 'list' ? 'white' : 'black',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
+            className={`md-button ${viewMode === 'list' ? 'md-button-primary' : 'md-button-secondary'}`}
           >
             List View
           </button>
@@ -310,28 +262,14 @@ export default function itemList(props: {
             <>
               <button
                 onClick={selectAllFiles}
-                style={{
-                  padding: '8px 16px',
-                  backgroundColor: '#f1f3f4',
-                  color: 'black',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer'
-                }}
+                className="md-button md-button-secondary"
               >
                 Select All ({fileCount})
               </button>
               {selectedFiles.size > 0 && (
                 <button
                   onClick={deselectAllFiles}
-                  style={{
-                    padding: '8px 16px',
-                    backgroundColor: '#f1f3f4',
-                    color: 'black',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer'
-                  }}
+                  className="md-button md-button-secondary"
                 >
                   Deselect All
                 </button>
@@ -339,9 +277,9 @@ export default function itemList(props: {
             </>
           )}
         </div>
-        <div style={{display: 'flex', gap: '8px', flexWrap: 'wrap'}}>
+        <div className="toolbar-right">
           {selectedFiles.size > 0 && (
-            <span style={{padding: '8px', fontWeight: 'bold', color: '#1a73e8'}}>
+            <span className="selected-count">
               {selectedFiles.size} selected
             </span>
           )}
@@ -349,15 +287,7 @@ export default function itemList(props: {
             <button
               onClick={downloadSelectedAsZip}
               disabled={downloadProgress !== null}
-              style={{
-                padding: '8px 16px',
-                backgroundColor: downloadProgress !== null ? '#ccc' : '#34a853',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: downloadProgress !== null ? 'not-allowed' : 'pointer',
-                fontWeight: 'bold'
-              }}
+              className={`md-button ${downloadProgress !== null ? 'md-button-disabled' : 'md-button-success'}`}
             >
               {downloadProgress !== null
                 ? `Downloading ${downloadProgress.current}/${downloadProgress.total}...`
@@ -370,54 +300,27 @@ export default function itemList(props: {
         </div>
       </div>
       {downloadProgress !== null && (
-        <div style={{padding: '10px', backgroundColor: '#e8f0fe'}}>
-          <div style={{marginBottom: '5px', fontSize: '0.9em'}}>
+        <div className="progress-container">
+          <div className="progress-label">
             Creating ZIP: {downloadProgress.current}/{downloadProgress.total} files
           </div>
-          <div style={{width: '100%', backgroundColor: '#ddd', borderRadius: '4px', overflow: 'hidden'}}>
+          <div className="progress-bar-bg">
             <div
+              className="progress-bar-fill"
               style={{
-                width: `${(downloadProgress.current / downloadProgress.total) * 100}%`,
-                height: '20px',
-                backgroundColor: '#34a853',
-                transition: 'width 0.3s ease'
+                width: `${(downloadProgress.current / downloadProgress.total) * 100}%`
               }}
             />
           </div>
         </div>
       )}
       {viewMode === 'grid' ? (
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-          gap: '16px',
-          padding: '16px',
-          overflowY: 'auto',
-          flex: 1
-        }}>
+        <div className="grid-view">
           {props.itemList.map((item, index) => (
             <div
               key={index}
               onClick={() => handleItemClick(item)}
-              style={{
-                border: `2px solid ${item.path && selectedFiles.has(item.path) ? '#1a73e8' : '#dadce0'}`,
-                borderRadius: '8px',
-                padding: '12px',
-                cursor: 'pointer',
-                backgroundColor: item.path && selectedFiles.has(item.path) ? '#e8f0fe' : 'white',
-                transition: 'all 0.2s',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                minHeight: '120px',
-                position: 'relative'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.boxShadow = 'none'
-              }}
+              className={`grid-item ${item.path && selectedFiles.has(item.path) ? 'grid-item-selected' : ''}`}
             >
               {!item.isBucket && !item.isDirectory && (
                 <input
@@ -425,56 +328,29 @@ export default function itemList(props: {
                   checked={item.path ? selectedFiles.has(item.path) : false}
                   onChange={(e) => toggleFileSelection(e, item)}
                   onClick={(e) => e.stopPropagation()}
-                  style={{
-                    position: 'absolute',
-                    top: '8px',
-                    right: '8px',
-                    width: '20px',
-                    height: '20px',
-                    cursor: 'pointer',
-                    zIndex: 10
-                  }}
+                  className="grid-item-checkbox"
                 />
               )}
-              <div>
+              <div className="grid-item-content">
                 {!item.isBucket && !item.isDirectory && isMediaFile(item.name) ? (
                   <MediaThumbnail s3Client={props.s3Client} bucket={props.bucket} item={item} />
                 ) : (
-                  <div style={{fontSize: '2.5em', textAlign: 'center', marginBottom: '8px'}}>
+                  <div className="grid-item-icon">
                     {item.isBucket ? "🪣" : item.isDirectory ? "🗂️" : "📄"}
                   </div>
                 )}
-                <div style={{
-                  fontWeight: '500',
-                  fontSize: '0.9em',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  marginBottom: '4px',
-                  marginTop: '8px'
-                }} title={item.name}>
+                <div className="grid-item-name" title={item.name}>
                   {item.name}
                 </div>
               </div>
-              <div>
-                <div style={{fontSize: '0.75em', color: '#5f6368', marginBottom: '8px'}}>
+              <div className="grid-item-footer">
+                <div className="grid-item-size">
                   {item.isBucket || item.isDirectory ? "-" : item.size ? normaliseSize(item.size) : "0"}
                 </div>
                 {!item.isBucket && !item.isDirectory && (
                   <button
                     onClick={(e) => handleDownload(e, item)}
-                    style={{
-                      width: '100%',
-                      padding: '6px',
-                      backgroundColor: '#1a73e8',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      fontSize: '0.85em'
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1557b0'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#1a73e8'}
+                    className="md-button md-button-primary grid-item-download"
                   >
                     Download
                   </button>
@@ -503,15 +379,7 @@ export default function itemList(props: {
                       e.stopPropagation()
                       handleDownload(e, item)
                     }}
-                    style={{
-                      padding: '4px 12px',
-                      backgroundColor: '#1a73e8',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      fontSize: '0.85em'
-                    }}
+                    className="md-button md-button-primary md-button-small"
                   >
                     Download
                   </button>

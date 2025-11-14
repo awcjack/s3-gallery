@@ -79,7 +79,7 @@ function App() {
 
   return (
     <div className="App">
-      <Header logined={true} openLoginForm={() => setShowLoginForm(true)}/>
+      <Header logined={true} openLoginForm={() => setShowLoginForm(true)} s3Token={s3Token} />
       {showLoginForm ? <LoginModal closeLoginForm={()=>setShowLoginForm(false)} submitForm={submitLoginForm} setS3Token={setS3Token} s3Token={s3Token}/> : null}
       <MainContainer s3Client={s3Client} bucketList={bucketList} initialBucket={s3Token.bucket}/>
     </div>
