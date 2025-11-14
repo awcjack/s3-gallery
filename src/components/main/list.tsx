@@ -162,6 +162,8 @@ export default function itemList(props: {
   onDownloadAll: () => void
 }) {
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('grid')
+  const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set())
+  const [downloadProgress, setDownloadProgress] = useState<{current: number, total: number} | null>(null)
 
   const handleItemClick = (item: S3Item) => {
     if (item.isBucket) {
@@ -199,17 +201,89 @@ export default function itemList(props: {
     }
   }
 
+  const toggleFileSelection = (e: React.ChangeEvent<HTMLInputElement>, item: S3Item) => {
+    e.stopPropagation()
+    if (item.path && !item.isBucket && !item.isDirectory) {
+      const newSelected = new Set(selectedFiles)
+      if (newSelected.has(item.path)) {
+        newSelected.delete(item.path)
+      } else {
+        newSelected.add(item.path)
+      }
+      setSelectedFiles(newSelected)
+    }
+  }
+
+  const selectAllFiles = () => {
+    const allFiles = props.itemList.filter(item => !item.isBucket && !item.isDirectory)
+    const newSelected = new Set<string>()
+    allFiles.forEach(item => {
+      if (item.path) newSelected.add(item.path)
+    })
+    setSelectedFiles(newSelected)
+  }
+
+  const deselectAllFiles = () => {
+    setSelectedFiles(new Set())
+  }
+
+  const downloadSelectedAsZip = async () => {
+    const JSZip = (await import('jszip')).default
+    const filesToDownload = selectedFiles.size > 0
+      ? props.itemList.filter(item => item.path && selectedFiles.has(item.path))
+      : props.itemList.filter(item => !item.isBucket && !item.isDirectory)
+
+    if (filesToDownload.length === 0) {
+      alert("No files to download")
+      return
+    }
+
+    setDownloadProgress({ current: 0, total: filesToDownload.length })
+    const zip = new JSZip()
+
+    try {
+      for (let i = 0; i < filesToDownload.length; i++) {
+        const item = filesToDownload[i]
+        if (item.path) {
+          const data = await getObjectContent(props.s3Client, props.bucket, item.path)
+          if (data) {
+            zip.file(item.name, data)
+          }
+          setDownloadProgress({ current: i + 1, total: filesToDownload.length })
+        }
+      }
+
+      const blob = await zip.generateAsync({ type: 'blob' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${props.bucket || 'files'}-${new Date().getTime()}.zip`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+
+      setDownloadProgress(null)
+      setSelectedFiles(new Set())
+    } catch (error) {
+      console.error("Error creating zip:", error)
+      alert("Error creating zip file")
+      setDownloadProgress(null)
+    }
+  }
+
   const mediaItems = props.itemList.filter(item => !item.isBucket && !item.isDirectory && isMediaFile(item.name))
+
+  const fileCount = props.itemList.filter(item => !item.isBucket && !item.isDirectory).length
 
   return (
     <div style={{height: '100%', display: 'flex', flexDirection: 'column'}}>
-      <div style={{padding: '10px', borderBottom: '2px solid #e0e0e0', display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-        <div>
+      <div style={{padding: '10px', borderBottom: '2px solid #e0e0e0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px'}}>
+        <div style={{display: 'flex', gap: '8px', flexWrap: 'wrap'}}>
           <button
             onClick={() => setViewMode('grid')}
             style={{
               padding: '8px 16px',
-              marginRight: '8px',
               backgroundColor: viewMode === 'grid' ? '#1a73e8' : '#f1f3f4',
               color: viewMode === 'grid' ? 'white' : 'black',
               border: 'none',
@@ -232,24 +306,86 @@ export default function itemList(props: {
           >
             List View
           </button>
+          {fileCount > 0 && (
+            <>
+              <button
+                onClick={selectAllFiles}
+                style={{
+                  padding: '8px 16px',
+                  backgroundColor: '#f1f3f4',
+                  color: 'black',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}
+              >
+                Select All ({fileCount})
+              </button>
+              {selectedFiles.size > 0 && (
+                <button
+                  onClick={deselectAllFiles}
+                  style={{
+                    padding: '8px 16px',
+                    backgroundColor: '#f1f3f4',
+                    color: 'black',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Deselect All
+                </button>
+              )}
+            </>
+          )}
         </div>
-        {mediaItems.length > 0 && (
-          <button
-            onClick={props.onDownloadAll}
-            style={{
-              padding: '8px 16px',
-              backgroundColor: '#34a853',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontWeight: 'bold'
-            }}
-          >
-            Download All Media ({mediaItems.length})
-          </button>
-        )}
+        <div style={{display: 'flex', gap: '8px', flexWrap: 'wrap'}}>
+          {selectedFiles.size > 0 && (
+            <span style={{padding: '8px', fontWeight: 'bold', color: '#1a73e8'}}>
+              {selectedFiles.size} selected
+            </span>
+          )}
+          {fileCount > 0 && (
+            <button
+              onClick={downloadSelectedAsZip}
+              disabled={downloadProgress !== null}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: downloadProgress !== null ? '#ccc' : '#34a853',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: downloadProgress !== null ? 'not-allowed' : 'pointer',
+                fontWeight: 'bold'
+              }}
+            >
+              {downloadProgress !== null
+                ? `Downloading ${downloadProgress.current}/${downloadProgress.total}...`
+                : selectedFiles.size > 0
+                  ? `Download Selected (${selectedFiles.size}) as ZIP`
+                  : `Download All (${fileCount}) as ZIP`
+              }
+            </button>
+          )}
+        </div>
       </div>
+      {downloadProgress !== null && (
+        <div style={{padding: '10px', backgroundColor: '#e8f0fe'}}>
+          <div style={{marginBottom: '5px', fontSize: '0.9em'}}>
+            Creating ZIP: {downloadProgress.current}/{downloadProgress.total} files
+          </div>
+          <div style={{width: '100%', backgroundColor: '#ddd', borderRadius: '4px', overflow: 'hidden'}}>
+            <div
+              style={{
+                width: `${(downloadProgress.current / downloadProgress.total) * 100}%`,
+                height: '20px',
+                backgroundColor: '#34a853',
+                transition: 'width 0.3s ease'
+              }}
+            />
+          </div>
+        </div>
+      )}
       {viewMode === 'grid' ? (
         <div style={{
           display: 'grid',
@@ -264,26 +400,42 @@ export default function itemList(props: {
               key={index}
               onClick={() => handleItemClick(item)}
               style={{
-                border: '1px solid #dadce0',
+                border: `2px solid ${item.path && selectedFiles.has(item.path) ? '#1a73e8' : '#dadce0'}`,
                 borderRadius: '8px',
                 padding: '12px',
                 cursor: 'pointer',
-                backgroundColor: 'white',
+                backgroundColor: item.path && selectedFiles.has(item.path) ? '#e8f0fe' : 'white',
                 transition: 'all 0.2s',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
-                minHeight: '120px'
+                minHeight: '120px',
+                position: 'relative'
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)'
-                e.currentTarget.style.borderColor = '#1a73e8'
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.boxShadow = 'none'
-                e.currentTarget.style.borderColor = '#dadce0'
               }}
             >
+              {!item.isBucket && !item.isDirectory && (
+                <input
+                  type="checkbox"
+                  checked={item.path ? selectedFiles.has(item.path) : false}
+                  onChange={(e) => toggleFileSelection(e, item)}
+                  onClick={(e) => e.stopPropagation()}
+                  style={{
+                    position: 'absolute',
+                    top: '8px',
+                    right: '8px',
+                    width: '20px',
+                    height: '20px',
+                    cursor: 'pointer',
+                    zIndex: 10
+                  }}
+                />
+              )}
               <div>
                 {!item.isBucket && !item.isDirectory && isMediaFile(item.name) ? (
                   <MediaThumbnail s3Client={props.s3Client} bucket={props.bucket} item={item} />
