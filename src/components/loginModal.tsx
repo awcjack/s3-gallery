@@ -1,6 +1,9 @@
 function updateAccessKey(event: React.FormEvent<HTMLInputElement>, setS3Token: React.Dispatch<React.SetStateAction<{
   accessKey: string;
   secretKey: string;
+  endpoint: string;
+  region: string;
+  bucket: string;
 }>>) {
   event.persist()
   setS3Token((values) => ({
@@ -12,11 +15,56 @@ function updateAccessKey(event: React.FormEvent<HTMLInputElement>, setS3Token: R
 function updateSecretKey(event: React.FormEvent<HTMLInputElement>, setS3Token: React.Dispatch<React.SetStateAction<{
   accessKey: string;
   secretKey: string;
+  endpoint: string;
+  region: string;
+  bucket: string;
 }>>) {
   event.persist()
   setS3Token((values) => ({
     ...values,
     secretKey: (event.target as HTMLInputElement).value
+  }))
+}
+
+function updateEndpoint(event: React.FormEvent<HTMLInputElement>, setS3Token: React.Dispatch<React.SetStateAction<{
+  accessKey: string;
+  secretKey: string;
+  endpoint: string;
+  region: string;
+  bucket: string;
+}>>) {
+  event.persist()
+  setS3Token((values) => ({
+    ...values,
+    endpoint: (event.target as HTMLInputElement).value
+  }))
+}
+
+function updateRegion(event: React.FormEvent<HTMLInputElement>, setS3Token: React.Dispatch<React.SetStateAction<{
+  accessKey: string;
+  secretKey: string;
+  endpoint: string;
+  region: string;
+  bucket: string;
+}>>) {
+  event.persist()
+  setS3Token((values) => ({
+    ...values,
+    region: (event.target as HTMLInputElement).value
+  }))
+}
+
+function updateBucket(event: React.FormEvent<HTMLInputElement>, setS3Token: React.Dispatch<React.SetStateAction<{
+  accessKey: string;
+  secretKey: string;
+  endpoint: string;
+  region: string;
+  bucket: string;
+}>>) {
+  event.persist()
+  setS3Token((values) => ({
+    ...values,
+    bucket: (event.target as HTMLInputElement).value
   }))
 }
 
@@ -26,9 +74,15 @@ export default function loginForm(props: {
   setS3Token: React.Dispatch<React.SetStateAction<{
     accessKey: string;
     secretKey: string;
+    endpoint: string;
+    region: string;
+    bucket: string;
   }>>, s3Token: {
     accessKey: string;
     secretKey: string;
+    endpoint: string;
+    region: string;
+    bucket: string;
   }
 }) {
   return (
@@ -38,7 +92,7 @@ export default function loginForm(props: {
           props.submitForm(e)
           props.closeLoginForm()
         }}>
-          Login<br/>
+          <div style={{fontSize: "1.5em", marginBottom: "10px"}}>S3 Configuration</div>
           <input
             id="access-key"
             className="login-modal-input"
@@ -56,6 +110,33 @@ export default function loginForm(props: {
             name="s3SecretKey"
             value={props.s3Token.secretKey}
             onInput={(event) => updateSecretKey(event, props.setS3Token)}
+          /><br />
+          <input
+            id="endpoint"
+            className="login-modal-input"
+            type="text"
+            placeholder="S3 Endpoint URL (e.g., https://s3.amazonaws.com)"
+            name="s3Endpoint"
+            value={props.s3Token.endpoint}
+            onInput={(event) => updateEndpoint(event, props.setS3Token)}
+          /><br />
+          <input
+            id="region"
+            className="login-modal-input"
+            type="text"
+            placeholder="Region (e.g., us-east-1)"
+            name="s3Region"
+            value={props.s3Token.region}
+            onInput={(event) => updateRegion(event, props.setS3Token)}
+          /><br />
+          <input
+            id="bucket"
+            className="login-modal-input"
+            type="text"
+            placeholder="Bucket (optional)"
+            name="s3Bucket"
+            value={props.s3Token.bucket}
+            onInput={(event) => updateBucket(event, props.setS3Token)}
           /><br />
           <button type="submit">Login</button>
         </form>
