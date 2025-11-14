@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { S3Client } from "@aws-sdk/client-s3"
 import { listPath, S3Item, getPresignedDownloadUrl } from '../s3API'
 
-import LeftSidebar from './leftSidebar'
 import PathBar from './pathBar'
 import List from "./list"
 import Preview from "./preview"
@@ -20,10 +19,12 @@ function isMediaFile(filename: string): boolean {
 export default function mainContainer(props: {
   s3Client: S3Client,
   bucketList: S3Item[],
-  initialBucket?: string
+  initialBucket?: string,
+  initialPath?: string,
+  onPathChange?: (bucket: string, path: string) => void
 }) {
   const [bucket, setBucket] = useState(props.initialBucket || "")
-  const [path, setPath] = useState("")
+  const [path, setPath] = useState(props.initialPath || "")
   const [currentFile, setCurrentFile] = useState<S3Item|null>(null)
   const [currentDir, setCurrentDir] = useState<S3Item[]>([])
 
@@ -42,6 +43,10 @@ export default function mainContainer(props: {
       } else if (!deepEquals(props.bucketList, currentDir)) {
         setCurrentDir(props.bucketList)
         setPath("")
+      }
+      // Notify parent of path changes
+      if (props.onPathChange) {
+        props.onPathChange(bucket, path)
       }
     })()
   })
@@ -69,7 +74,6 @@ export default function mainContainer(props: {
 
   return (
     <div className="container">
-      <LeftSidebar bucketList={props.bucketList} goRoot={() => setBucket("")}/>
       {bucket && currentFile ? <Preview s3Client={props.s3Client} bucket={bucket} object={currentFile} closePreview={() => setCurrentFile(null)}/> : null}
       <List
         itemList={currentDir}

@@ -11,13 +11,15 @@ export default function header(props: {
     region: string;
     bucket: string;
   },
+  currentBucket?: string,
+  currentPath?: string,
   onShareUrl?: () => void
 }) {
   const [showShareModal, setShowShareModal] = useState(false)
   const [shareUrl, setShareUrl] = useState("")
 
   const handleShareUrl = () => {
-    // Build share URL with all configuration
+    // Build share URL with all configuration including current path
     const baseUrl = window.location.origin + window.location.pathname
     const params = new URLSearchParams()
 
@@ -25,7 +27,11 @@ export default function header(props: {
     if (props.s3Token.secretKey) params.set('secretKey', props.s3Token.secretKey)
     if (props.s3Token.endpoint) params.set('endpoint', props.s3Token.endpoint)
     if (props.s3Token.region) params.set('region', props.s3Token.region)
-    if (props.s3Token.bucket) params.set('bucket', props.s3Token.bucket)
+
+    // Use current bucket and path from navigation state
+    const bucket = props.currentBucket || props.s3Token.bucket
+    if (bucket) params.set('bucket', bucket)
+    if (props.currentPath) params.set('path', props.currentPath)
 
     const fullUrl = params.toString() ? `${baseUrl}?${params.toString()}` : baseUrl
     setShareUrl(fullUrl)
