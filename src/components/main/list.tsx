@@ -19,13 +19,20 @@ function isMediaFile(filename: string): boolean {
   const ext = filename.toLowerCase().split('.').pop() || ""
   const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg']
   const videoExts = ['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv']
-  return imageExts.includes(ext) || videoExts.includes(ext)
+  const audioExts = ['mp3', 'wav', 'ogg', 'aac', 'flac', 'm4a', 'wma']
+  return imageExts.includes(ext) || videoExts.includes(ext) || audioExts.includes(ext)
 }
 
 function isVideoFile(filename: string): boolean {
   const ext = filename.toLowerCase().split('.').pop() || ""
   const videoExts = ['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv']
   return videoExts.includes(ext)
+}
+
+function isAudioFile(filename: string): boolean {
+  const ext = filename.toLowerCase().split('.').pop() || ""
+  const audioExts = ['mp3', 'wav', 'ogg', 'aac', 'flac', 'm4a', 'wma']
+  return audioExts.includes(ext)
 }
 
 function getMediaType(filename: string): string {
@@ -43,7 +50,13 @@ function getMediaType(filename: string): string {
     'ogg': 'video/ogg',
     'mov': 'video/quicktime',
     'avi': 'video/x-msvideo',
-    'mkv': 'video/x-matroska'
+    'mkv': 'video/x-matroska',
+    'mp3': 'audio/mpeg',
+    'wav': 'audio/wav',
+    'aac': 'audio/aac',
+    'flac': 'audio/flac',
+    'm4a': 'audio/mp4',
+    'wma': 'audio/x-ms-wma'
   }
   return extMap[ext] || 'application/octet-stream'
 }
@@ -56,6 +69,7 @@ function MediaThumbnail(props: {
   const [thumbnail, setThumbnail] = useState<string>("")
   const [loading, setLoading] = useState(true)
   const isVideo = isVideoFile(props.item.name)
+  const isAudio = isAudioFile(props.item.name)
 
   useEffect(() => {
     let isMounted = true
@@ -95,7 +109,7 @@ function MediaThumbnail(props: {
   if (!thumbnail) {
     return (
       <div className="media-thumbnail-placeholder">
-        {isVideo ? "🎬" : "🖼️"}
+        {isVideo ? "🎬" : isAudio ? "🎵" : "🖼️"}
       </div>
     )
   }
@@ -107,6 +121,16 @@ function MediaThumbnail(props: {
           src={thumbnail}
           className="media-thumbnail"
         />
+      ) : isAudio ? (
+        <div className="audio-thumbnail">
+          <div className="audio-icon">🎵</div>
+          <audio
+            src={thumbnail}
+            controls
+            className="audio-preview"
+            style={{ width: '100%', marginTop: '10px' }}
+          />
+        </div>
       ) : (
         <img
           src={thumbnail}
@@ -125,7 +149,8 @@ export default function itemList(props: {
   setCurrentFile: React.Dispatch<React.SetStateAction<S3Item>>,
   s3Client: S3Client,
   bucket: string,
-  onDownloadAll: () => void
+  onDownloadAll: () => void,
+  onUploadClick?: () => void
 }) {
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('grid')
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set())
@@ -258,6 +283,14 @@ export default function itemList(props: {
           >
             List View
           </button>
+          {props.bucket && props.onUploadClick && (
+            <button
+              onClick={props.onUploadClick}
+              className="md-button md-button-success"
+            >
+              Upload Files
+            </button>
+          )}
           {fileCount > 0 && (
             <>
               <button
