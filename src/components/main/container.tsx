@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { S3Client } from "@aws-sdk/client-s3"
-import { listPath, S3Item, getPresignedDownloadUrl } from '../s3API'
+import { listPath, S3Item, getPresignedDownloadUrl, uploadObjects, UploadProgress } from '../s3API'
 
 import PathBar from './pathBar'
 import List from "./list"
@@ -30,6 +30,8 @@ export default function mainContainer(props: {
   const [currentFile, setCurrentFile] = useState<S3Item|null>(null)
   const [currentDir, setCurrentDir] = useState<S3Item[]>([])
   const [showUploadModal, setShowUploadModal] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState<UploadProgress[] | null>(null)
+  const [isUploading, setIsUploading] = useState(false)
 
   useEffect(() => {
     (async () => {
@@ -91,6 +93,54 @@ export default function mainContainer(props: {
     refreshDir()
   }
 
+  const handleFilesDropped = async (files: File[]) => {
+    if (files.length === 0 || isUploading || !bucket) return
+
+    setIsUploading(true)
+
+    try {
+      // Convert files to the format expected by uploadObjects
+      const filesToUpload = await Promise.all(
+        files.map(async (file) => {
+          const arrayBuffer = await file.arrayBuffer()
+          const uint8Array = new Uint8Array(arrayBuffer)
+
+          // Preserve folder structure from webkitRelativePath if available
+          const fileName = (file as any).webkitRelativePath || file.name
+
+          return {
+            name: fileName,
+            data: uint8Array,
+            type: file.type || undefined
+          }
+        })
+      )
+
+      await uploadObjects(
+        props.s3Client,
+        bucket,
+        path,
+        filesToUpload,
+        setUploadProgress
+      )
+
+      // Wait a moment to show completion
+      setTimeout(() => {
+        handleUploadComplete()
+        setUploadProgress(null)
+        setIsUploading(false)
+      }, 1500)
+    } catch (error) {
+      console.error("Upload error:", error)
+      alert("Upload failed: " + (error instanceof Error ? error.message : "Unknown error"))
+      setUploadProgress(null)
+      setIsUploading(false)
+    }
+  }
+
+  const uploadedCount = uploadProgress?.filter(p => p.status === 'completed').length || 0
+  const totalCount = uploadProgress?.length || 0
+
   return (
     <div className="container">
       {bucket && currentFile ? <Preview s3Client={props.s3Client} bucket={bucket} object={currentFile} closePreview={() => setCurrentFile(null)}/> : null}
@@ -103,6 +153,38 @@ export default function mainContainer(props: {
           onUploadComplete={handleUploadComplete}
         />
       ) : null}
+      {uploadProgress && isUploading && (
+        <div className="upload-toast">
+          <div className="upload-toast-header">
+            <span>Uploading Files... {uploadedCount}/{totalCount}</span>
+          </div>
+          <div className="progress-bar-bg">
+            <div
+              className="progress-bar-fill"
+              style={{
+                width: `${totalCount > 0 ? (uploadedCount / totalCount) * 100 : 0}%`
+              }}
+            />
+          </div>
+          <div className="upload-toast-files">
+            {uploadProgress.slice(-3).map((progress, index) => (
+              <div key={index} className="upload-toast-file">
+                <span className="upload-toast-icon">
+                  {progress.status === 'pending' ? '⏳' :
+                   progress.status === 'uploading' ? '⬆️' :
+                   progress.status === 'completed' ? '✅' : '❌'}
+                </span>
+                <span className="upload-toast-filename">{progress.fileName}</span>
+              </div>
+            ))}
+            {uploadProgress.length > 3 && (
+              <div className="upload-toast-more">
+                +{uploadProgress.length - 3} more files
+              </div>
+            )}
+          </div>
+        </div>
+      )}
       <List
         itemList={currentDir}
         setBucket={setBucket}
@@ -112,6 +194,7 @@ export default function mainContainer(props: {
         bucket={bucket}
         onDownloadAll={handleDownloadAll}
         onUploadClick={() => setShowUploadModal(true)}
+        onFilesDropped={handleFilesDropped}
       />
       <PathBar bucket={bucket} path={path} setBucket={setBucket} setPath={setPath}/>
     </div>

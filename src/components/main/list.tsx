@@ -150,11 +150,13 @@ export default function itemList(props: {
   s3Client: S3Client,
   bucket: string,
   onDownloadAll: () => void,
-  onUploadClick?: () => void
+  onUploadClick?: () => void,
+  onFilesDropped?: (files: File[]) => void
 }) {
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('grid')
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set())
   const [downloadProgress, setDownloadProgress] = useState<{current: number, total: number} | null>(null)
+  const [isDraggingOver, setIsDraggingOver] = useState(false)
 
   const handleItemClick = (item: S3Item) => {
     if (item.isBucket) {
@@ -267,8 +269,49 @@ export default function itemList(props: {
 
   const fileCount = props.itemList.filter(item => !item.isBucket && !item.isDirectory).length
 
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (props.bucket && props.onFilesDropped) {
+      setIsDraggingOver(true)
+    }
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    // Only set to false if we're leaving the list-container itself
+    if (e.currentTarget === e.target) {
+      setIsDraggingOver(false)
+    }
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDraggingOver(false)
+
+    if (props.bucket && props.onFilesDropped) {
+      const droppedFiles = Array.from(e.dataTransfer.files)
+      if (droppedFiles.length > 0) {
+        props.onFilesDropped(droppedFiles)
+      }
+    }
+  }
+
   return (
-    <div className="list-container">
+    <div
+      className="list-container"
+      onDragEnter={handleDragEnter}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       <div className="toolbar">
         <div className="toolbar-left">
           <button
@@ -332,6 +375,14 @@ export default function itemList(props: {
           )}
         </div>
       </div>
+      {isDraggingOver && props.bucket && (
+        <div className="drag-overlay">
+          <div className="drag-overlay-content">
+            <div className="drag-overlay-icon">📁</div>
+            <div className="drag-overlay-text">Drop files here to upload</div>
+          </div>
+        </div>
+      )}
       {downloadProgress !== null && (
         <div className="progress-container">
           <div className="progress-label">
