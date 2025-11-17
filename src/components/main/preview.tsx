@@ -7,6 +7,93 @@ import download from "../../assets/undraw_cloud-download.svg"
 import person from "../../assets/undraw_person.svg"
 import { useEffect, useState } from "react"
 
+interface CachedMedia {
+  data: string;
+  expiry: number;
+}
+
+// Default cache expiry: 24 hours
+const CACHE_EXPIRY_MS = 24 * 60 * 60 * 1000
+
+function getCacheKey(bucket: string, path: string): string {
+  return `s3-preview-cache:${bucket}:${path}`
+}
+
+function getFromCache(bucket: string, path: string): string | null {
+  try {
+    const cacheKey = getCacheKey(bucket, path)
+    const cached = localStorage.getItem(cacheKey)
+    if (!cached) return null
+
+    const cachedMedia: CachedMedia = JSON.parse(cached)
+    const now = Date.now()
+
+    if (now > cachedMedia.expiry) {
+      // Cache expired, remove it
+      localStorage.removeItem(cacheKey)
+      return null
+    }
+
+    return cachedMedia.data
+  } catch (error) {
+    console.error("Error reading from cache:", error)
+    return null
+  }
+}
+
+function saveToCache(bucket: string, path: string, data: string): void {
+  try {
+    const cacheKey = getCacheKey(bucket, path)
+    const cachedMedia: CachedMedia = {
+      data,
+      expiry: Date.now() + CACHE_EXPIRY_MS
+    }
+    localStorage.setItem(cacheKey, JSON.stringify(cachedMedia))
+  } catch (error) {
+    console.error("Error saving to cache:", error)
+    // If localStorage is full, try to clear old cache entries
+    if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+      clearExpiredCache()
+      // Try again after clearing
+      try {
+        const cacheKey = getCacheKey(bucket, path)
+        const cachedMedia: CachedMedia = {
+          data,
+          expiry: Date.now() + CACHE_EXPIRY_MS
+        }
+        localStorage.setItem(cacheKey, JSON.stringify(cachedMedia))
+      } catch (retryError) {
+        console.error("Failed to cache after cleanup:", retryError)
+      }
+    }
+  }
+}
+
+function clearExpiredCache(): void {
+  const now = Date.now()
+  const keysToRemove: string[] = []
+
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i)
+    if (key && key.startsWith('s3-preview-cache:')) {
+      try {
+        const cached = localStorage.getItem(key)
+        if (cached) {
+          const cachedMedia: CachedMedia = JSON.parse(cached)
+          if (now > cachedMedia.expiry) {
+            keysToRemove.push(key)
+          }
+        }
+      } catch (error) {
+        // If we can't parse it, remove it
+        keysToRemove.push(key)
+      }
+    }
+  }
+
+  keysToRemove.forEach(key => localStorage.removeItem(key))
+}
+
 function isVideoFile(filename: string): boolean {
   const ext = filename.toLowerCase().split('.').pop() || ""
   const videoExts = ['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv']
@@ -48,12 +135,24 @@ export default function preview(props: {
   useEffect(() => {
     (async () => {
       if (props.bucket && props.object.path) {
+        // Try to get from cache first
+        const cachedData = getFromCache(props.bucket, props.object.path)
+        if (cachedData) {
+          if (data !== cachedData) {
+            setData(cachedData)
+          }
+          return
+        }
+
+        // If not in cache, fetch from S3
         const currentData = await getObjectContent(props.s3Client, props.bucket, props.object.path)
         if (currentData) {
           const mediaType = getMediaType(props.object.name)
           const mediaSrc = `data:${mediaType};base64,` + Buffer.from(currentData).toString("base64")
           if (data !== mediaSrc) {
             setData(mediaSrc)
+            // Save to cache
+            saveToCache(props.bucket, props.object.path, mediaSrc)
           }
         }
       }

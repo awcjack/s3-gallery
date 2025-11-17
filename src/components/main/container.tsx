@@ -21,7 +21,8 @@ export default function mainContainer(props: {
   bucketList: S3Item[],
   initialBucket?: string,
   initialPath?: string,
-  onPathChange?: (bucket: string, path: string) => void
+  onPathChange?: (bucket: string, path: string) => void,
+  showPreview: boolean
 }) {
   const [bucket, setBucket] = useState(props.initialBucket || "")
   const [path, setPath] = useState(props.initialPath || "")
@@ -74,7 +75,7 @@ export default function mainContainer(props: {
 
   return (
     <div className="container">
-      {bucket && currentFile ? <Preview s3Client={props.s3Client} bucket={bucket} object={currentFile} closePreview={() => setCurrentFile(null)}/> : null}
+      {bucket && currentFile && props.showPreview ? <Preview s3Client={props.s3Client} bucket={bucket} object={currentFile} closePreview={() => setCurrentFile(null)}/> : null}
       <List
         itemList={currentDir}
         setBucket={setBucket}
@@ -83,6 +84,7 @@ export default function mainContainer(props: {
         s3Client={props.s3Client}
         bucket={bucket}
         onDownloadAll={handleDownloadAll}
+        showPreview={props.showPreview}
       />
       <PathBar bucket={bucket} path={path} setBucket={setBucket} setPath={setPath}/>
     </div>
