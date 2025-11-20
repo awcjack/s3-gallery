@@ -4,6 +4,54 @@ import "./main.css"
 import { useState, useEffect } from "react"
 import { Buffer } from "buffer"
 
+interface CachedMedia {
+  data: string;
+  expiry: number;
+}
+
+// Default cache expiry: 24 hours
+const CACHE_EXPIRY_MS = 24 * 60 * 60 * 1000
+
+function getCacheKey(bucket: string, path: string): string {
+  return `s3-preview-cache:${bucket}:${path}`
+}
+
+function getFromCache(bucket: string, path: string): string | null {
+  try {
+    const cacheKey = getCacheKey(bucket, path)
+    const cached = localStorage.getItem(cacheKey)
+    if (!cached) return null
+
+    const cachedMedia: CachedMedia = JSON.parse(cached)
+    const now = Date.now()
+
+    if (now > cachedMedia.expiry) {
+      // Cache expired, remove it
+      localStorage.removeItem(cacheKey)
+      return null
+    }
+
+    return cachedMedia.data
+  } catch (error) {
+    console.error("Error reading from cache:", error)
+    return null
+  }
+}
+
+function saveToCache(bucket: string, path: string, data: string): void {
+  try {
+    const cacheKey = getCacheKey(bucket, path)
+    const cachedMedia: CachedMedia = {
+      data,
+      expiry: Date.now() + CACHE_EXPIRY_MS
+    }
+    localStorage.setItem(cacheKey, JSON.stringify(cachedMedia))
+  } catch (error) {
+    console.error("Error saving to cache:", error)
+    // If localStorage is full, we'll just skip caching this item
+  }
+}
+
 function normaliseSize(size: number): string {
   const unit = ["B", "kB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB", "RB", "QB"]
   let time = 0
@@ -51,7 +99,8 @@ function getMediaType(filename: string): string {
 function MediaThumbnail(props: {
   s3Client: S3Client,
   bucket: string,
-  item: S3Item
+  item: S3Item,
+  showPreview: boolean
 }) {
   const [thumbnail, setThumbnail] = useState<string>("")
   const [loading, setLoading] = useState(true)
@@ -60,14 +109,31 @@ function MediaThumbnail(props: {
   useEffect(() => {
     let isMounted = true
     const loadThumbnail = async () => {
+      if (!props.showPreview) {
+        setLoading(false)
+        return
+      }
+
       if (props.item.path && props.bucket) {
         try {
           setLoading(true)
+
+          // Try to get from cache first
+          const cachedData = getFromCache(props.bucket, props.item.path)
+          if (cachedData && isMounted) {
+            setThumbnail(cachedData)
+            setLoading(false)
+            return
+          }
+
+          // If not in cache, fetch from S3
           const data = await getObjectContent(props.s3Client, props.bucket, props.item.path)
           if (data && isMounted) {
             const mediaType = getMediaType(props.item.name)
             const mediaSrc = `data:${mediaType};base64,` + Buffer.from(data).toString("base64")
             setThumbnail(mediaSrc)
+            // Save to cache
+            saveToCache(props.bucket, props.item.path, mediaSrc)
           }
         } catch (error) {
           console.error("Error loading thumbnail:", error)
@@ -82,7 +148,7 @@ function MediaThumbnail(props: {
     return () => {
       isMounted = false
     }
-  }, [props.s3Client, props.bucket, props.item.path])
+  }, [props.s3Client, props.bucket, props.item.path, props.showPreview])
 
   if (loading) {
     return (
@@ -125,7 +191,8 @@ export default function itemList(props: {
   setCurrentFile: React.Dispatch<React.SetStateAction<S3Item>>,
   s3Client: S3Client,
   bucket: string,
-  onDownloadAll: () => void
+  onDownloadAll: () => void,
+  showPreview: boolean
 }) {
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('grid')
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set())
@@ -333,7 +400,7 @@ export default function itemList(props: {
               )}
               <div className="grid-item-content">
                 {!item.isBucket && !item.isDirectory && isMediaFile(item.name) ? (
-                  <MediaThumbnail s3Client={props.s3Client} bucket={props.bucket} item={item} />
+                  <MediaThumbnail s3Client={props.s3Client} bucket={props.bucket} item={item} showPreview={props.showPreview} />
                 ) : (
                   <div className="grid-item-icon">
                     {item.isBucket ? "🪣" : item.isDirectory ? "🗂️" : "📄"}

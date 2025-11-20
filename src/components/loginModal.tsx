@@ -83,7 +83,9 @@ export default function loginForm(props: {
     endpoint: string;
     region: string;
     bucket: string;
-  }
+  },
+  showPreview: boolean,
+  setShowPreview: React.Dispatch<React.SetStateAction<boolean>>
 }) {
   return (
     <div className="modal-bg" onClick={(e) => props.closeLoginForm()}>
@@ -138,6 +140,18 @@ export default function loginForm(props: {
             value={props.s3Token.bucket}
             onInput={(event) => updateBucket(event, props.setS3Token)}
           /><br />
+          <div style={{marginTop: "15px", marginBottom: "15px"}}>
+            <label style={{display: "flex", alignItems: "center", cursor: "pointer"}}>
+              <input
+                id="show-preview"
+                type="checkbox"
+                checked={props.showPreview}
+                onChange={(e) => props.setShowPreview(e.target.checked)}
+                style={{marginRight: "8px", cursor: "pointer"}}
+              />
+              <span>Enable media preview</span>
+            </label>
+          </div>
           <button type="submit">Login</button>
         </form>
       </div>

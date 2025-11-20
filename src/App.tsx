@@ -23,8 +23,10 @@ function App() {
   const s3Endpoint = urlEndpoint || localStorage.getItem("s3-endpoint") || "https://gateway.storjshare.io"
   const s3Region = urlRegion || localStorage.getItem("s3-region") || "US1"
   const s3Bucket = urlBucket || localStorage.getItem("s3-bucket") || ""
+  const savedShowPreview = localStorage.getItem("s3-show-preview") === "true"
 
   const [showLoginForm, setShowLoginForm] = useState(!s3AccessKey || !s3SecretKey)
+  const [showPreview, setShowPreview] = useState(savedShowPreview)
   const [s3Token, setS3Token] = useState({
     accessKey: s3AccessKey,
     secretKey: s3SecretKey,
@@ -52,6 +54,7 @@ function App() {
     localStorage.setItem("s3-endpoint", s3Token.endpoint)
     localStorage.setItem("s3-region", s3Token.region)
     localStorage.setItem("s3-bucket", s3Token.bucket)
+    localStorage.setItem("s3-show-preview", showPreview.toString())
     setS3Client(new S3Client({
       region: s3Token.region,
       endpoint: s3Token.endpoint,
@@ -83,6 +86,21 @@ function App() {
   const handlePathChange = (bucket: string, path: string) => {
     setCurrentBucket(bucket)
     setCurrentPath(path)
+
+    // Update URL with current path
+    const params = new URLSearchParams(window.location.search)
+    if (bucket) {
+      params.set('bucket', bucket)
+    } else {
+      params.delete('bucket')
+    }
+    if (path) {
+      params.set('path', path)
+    } else {
+      params.delete('path')
+    }
+    const newUrl = `${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}`
+    window.history.pushState({}, '', newUrl)
   }
 
   return (
@@ -94,13 +112,14 @@ function App() {
         currentBucket={currentBucket}
         currentPath={currentPath}
       />
-      {showLoginForm ? <LoginModal closeLoginForm={()=>setShowLoginForm(false)} submitForm={submitLoginForm} setS3Token={setS3Token} s3Token={s3Token}/> : null}
+      {showLoginForm ? <LoginModal closeLoginForm={()=>setShowLoginForm(false)} submitForm={submitLoginForm} setS3Token={setS3Token} s3Token={s3Token} showPreview={showPreview} setShowPreview={setShowPreview}/> : null}
       <MainContainer
         s3Client={s3Client}
         bucketList={bucketList}
         initialBucket={s3Token.bucket}
         initialPath={urlPath}
         onPathChange={handlePathChange}
+        showPreview={showPreview}
       />
     </div>
   )
