@@ -1,4 +1,4 @@
-import { S3Client, ListBucketsCommand, ListObjectsV2Command, GetObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, ListBucketsCommand, ListObjectsV2Command, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 
 export interface S3Item {
@@ -105,4 +105,57 @@ export async function getPresignedDownloadUrl(s3Client: S3Client, bucket: string
   }), { expiresIn: expireAfter })
 
   return url
+}
+
+export async function uploadObject(s3Client: S3Client, bucket: string, key: string, body: Uint8Array, contentType?: string): Promise<void> {
+  await s3Client.send(new PutObjectCommand({
+    Bucket: bucket,
+    Key: key,
+    Body: body,
+    ContentType: contentType
+  }))
+}
+
+export interface UploadProgress {
+  fileName: string
+  status: 'pending' | 'uploading' | 'completed' | 'failed'
+  error?: string
+}
+
+export async function uploadObjects(
+  s3Client: S3Client,
+  bucket: string,
+  path: string,
+  files: Array<{name: string, data: Uint8Array, type?: string}>,
+  onProgress?: (progress: UploadProgress[]) => void
+): Promise<void> {
+  const progressArray: UploadProgress[] = files.map(file => ({
+    fileName: file.name,
+    status: 'pending' as const
+  }))
+
+  if (onProgress) {
+    onProgress([...progressArray])
+  }
+
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i]
+    progressArray[i].status = 'uploading'
+    if (onProgress) {
+      onProgress([...progressArray])
+    }
+
+    try {
+      const key = path ? `${path}${file.name}` : file.name
+      await uploadObject(s3Client, bucket, key, file.data, file.type)
+      progressArray[i].status = 'completed'
+    } catch (error) {
+      progressArray[i].status = 'failed'
+      progressArray[i].error = error instanceof Error ? error.message : 'Unknown error'
+    }
+
+    if (onProgress) {
+      onProgress([...progressArray])
+    }
+  }
 }
